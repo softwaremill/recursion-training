@@ -82,6 +82,25 @@ e match {
 
 ### Making an ADT polymorphic
 
+Ideally we'd love to have something more elegant.
+A transformation which takes:
+- A recursive expression of type Expr, 
+- a function which evaluates `Expr => Double`  
+  For example `case Sum(d1, d2) => d1 + d2`
+And which produces a `Double`
+
+Types like `Sum(a: Expr, b: Expr)` force us to deal only with Exprs. 
+Ideally we'd like to have our eval definition to look like:
+```scala
+// does not compile, but it's only an illustration of a direction
+def eval(e: Expr): Double = 
+e match {
+  case Sum(dbl1: Double, dbl2: Double) => dbl1 + dbl2 // etc
+} 
+``` 
+
+Let's make our expression **polymorphic**.
+
 ```scala
 sealed trait Expr[A]
 
@@ -91,3 +110,75 @@ case class Sum[A](a: A, b: A)            extends Expr[A]
 case class Multiply[A](a: A, b: A)       extends Expr[A]
 case class Divide[A](a: A, b: A)         extends Expr[A]
 ```
+
+That's much better, because this allows us to build our desired awesome
+transformation:
+```scala 
+def transformation(exp: Expr[Double]): Double = exp match {
+  case IntValue(v) => v.toDouble
+  case DecValue(v) => v
+  case Sum(d1, d2) => d1 + d2
+  case Multiply(d1, d2) => d1 * d2
+  case Divide(d1, d2) => d1 / d2
+} 
+```
+Such transformation is what we aim for, because it doesn't look like
+recursion. It looks more like a set of rules, which we can **apply** to
+a recursive structure with some blackbox tool which will recursively
+build the result.
+
+But let's stop here for a while, because polymorphic expressions
+come with a cost... First, consider a trivial expression:  
+`val intVal = IntValue[Unit](10) // Expr[Unit]`
+
+What about more complex expressions?
+
+```scala
+  val sumExp: Expr[Expr[Unit]] =
+    Sum(
+      IntValue[Unit](10), // Expr[Unit]
+      IntValue[Unit](5)
+    )
+```
+
+### Fixing nested Exprs
+
+how to deal with types like `Expr[Expr[Expr[A]]]`?
+Let's wrap in:  
+
+```scala
+case class Fix[F[_]](unFix: F[Fix[F]])
+  
+val fixedIntExpr: Fix[Expr] = Fix(IntValue[Fix[Expr]](10))
+```
+
+The `Fix` type allows us to represent any `Expr[Expr[Expr....[A]]]` as `Fix[Expr]`
+
+Wait, why did we need this`Fix` thing?
+
+### A step back
+
+First, we wanted a transformation which doesn't look like recursion,
+but like a simple, flat set of rules. 
+
+A transformation which takes:
+- A recursive expression of type Expr, 
+- a function which evaluates `Expr => Double`  
+  For example `case Sum(d1, d2) => d1 + d2`
+
+To be able to express such rules, we needed to go from `Expr` to `Expr[A]`.
+To avoid issues with nested types, we introduced `Fix[Expr]`
+
+### Putting it all together
+
+Once we have:
+- A polymorphic recursive structure based on `Expr[A]`
+- A transformation expressed as a set of rules for 
+  each sub-type (`Expr[B] => B`)
+- A `Fix[F[_]]` wrapper
+
+We can now use a tool to put this all together. Such tool is called...
+
+## Catamorphism
+
+
