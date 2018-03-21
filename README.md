@@ -181,4 +181,60 @@ We can now use a tool to put this all together. Such tool is called...
 
 ## Catamorphism
 
+### Scheme
 
+A generic **foldRight** for data stuctures. In case of recursive data,
+this means **folding bottom-up**:
+
+```scala
+  val division =
+    Divide(DecValue(5.2), Sum(IntValue(10), IntValue(5)))
+```
+
+```
+            Divide                             Divide
+           /    \                              /    \
+DecValue(5.2)   Sum            -->   DecValue(5.2)  Sum
+                / \                                 / \
+     IntValue(10)  IntValue(5)                   10.0 5.0
+```
+
+```
+            Divide                             Divide
+           /    \                              /    \
+DecValue(5.2)   Sum            -->            5.2  15.0
+                / \                                 
+             10.0  5.0                  
+```
+
+```
+            Divide             -->            5.2 / 15.0                             
+           /    \                              
+         5.2   15.0            
+```
+
+Going **bottom-up**, we use our set of rules on leafs, then we build
+higher nodes **basing** on lower nodes. Catamorphism is a **generic** tool,
+so you don't have to implement it!
+
+### Matryoshka and cata
+
+The Matryoshka library does catamorphism for you:
+
+```scala
+
+val recursiveExpr: Fix[Expr] = ??? // your tree
+
+def transformation(expr: Expr[Double]): Double = ???
+
+// the magic call
+rcursiveExpression.cata(transformation) // returns Double
+```
+
+The `.cata()` call runs the whole folding process and constructs 
+the final `Double` value for you, provided just a set of rules for
+indiviual node types.
+
+### Expression functor
+
+Matryoshka's `.cata()` is a blackbox, but it has one more requirement.
