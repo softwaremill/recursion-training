@@ -222,7 +222,7 @@ The Matryoshka library does catamorphism for you:
 
 val recursiveExpr: Fix[Expr] = ??? // your tree
 
-def evalToDouble(expr: Expr[Double]): Double = ???
+def evalToDouble(expr: Expr[Double]): Double
 
 // the magic call
 rcursiveExpression.cata(evalToDouble) // returns Double
@@ -237,3 +237,42 @@ indiviual node types.
 Matryoshka's `.cata()` is a blackbox, but it has one more requirement.
 It's mechanism assumes that a `Functor` instance is available for your datatype.
 
+This means that you must provide a recipe for how to **map** `Expr[A]` to `Expr[B]`
+having a function `f: A => B`.
+For example to transform `Sum[A](a1: A, a2: A)` into `Sum[B](b1: B, b2: B)` you need
+to do `Sum(f(a1), f(a2))`. Such recipe has to be provided for all
+possible cases of `Expr`.
+
+```scala
+import scalaz.Functor  
+
+implicit val exprFunctor: Functor[Expr] = new Functor[Expr] {
+  override def map[A, B](expr: Expr[A])(f: A => B): Expr[B] = expr match {
+    case IntVal(v) => IntVal[B](v)
+    case Sum(a1, a2) => Sum(f(a1), f(a2))
+    case ... // etc.
+  }      
+}
+```
+
+This is finally all what we need! Here's a summary of our ingredients:
+
+1. A recursive structure `Expr[A]`
+2. A Functor for this type
+3. A set or evaulation rules for **individual cases**
+4. `Fix[[_]]`
+5. catamorphism
+
+4 & 5 are provided by Matryoshka.
+
+### Algebra
+
+Our evaluation function (point 3.) is called an **Algebra**. From Matryoshka:
+
+```scala
+type Algebra[F[_], A] = scala.Function1[F[A], A]
+    
+def evalToDouble(expr: Expr[Double]): Double
+  
+val evalToDouble: Algebra[Expr, Double]
+```
