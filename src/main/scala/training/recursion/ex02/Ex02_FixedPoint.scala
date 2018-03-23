@@ -15,7 +15,7 @@ case class Fix[F[_]](unFix: F[Fix[F]])
 object Ex02_FixedPoint extends App {
 
   // a set of rules
-  def transformation(exp: Expr[Double]): Double = exp match {
+  def evalToDouble(exp: Expr[Double]): Double = exp match {
     case IntValue(v)      => v.toDouble
     case DecValue(v)      => v
     case Sum(d1, d2)      => d1 + d2

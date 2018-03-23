@@ -19,7 +19,7 @@ object Ex03_Catamorphism extends App {
   import matryoshka.implicits._
 
   // a set of rules
-  val transformation: Algebra[Expr, Double] = {
+  val evalToDouble: Algebra[Expr, Double] = {
     case IntValue(v)      => v.toDouble
     case DecValue(v)      => v
     case Sum(d1, d2)      => d1 + d2
@@ -36,5 +36,5 @@ object Ex03_Catamorphism extends App {
 
   implicit val ExprFunctor: Functor[Expr] = ??? // TODO
 
-  sumExpr.cata(transformation)
+  println(s"Expression: $sumExpr\nExpr evaluated to double: ${sumExpr.cata(transformation)}")
 }

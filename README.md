@@ -83,11 +83,11 @@ e match {
 ### Making an ADT polymorphic
 
 Ideally we'd love to have something more elegant.
-A transformation which takes:
+We are looking for a tool which takes:
 - A recursive expression of type Expr, 
 - a function which evaluates `Expr => Double`  
   For example `case Sum(d1, d2) => d1 + d2`
-And which produces a `Double`
+Such tool evaluates whole expression to a `Double`
 
 Types like `Sum(a: Expr, b: Expr)` force us to deal only with Exprs. 
 Ideally we'd like to have our eval definition to look like:
@@ -111,8 +111,7 @@ case class Multiply[A](a: A, b: A)       extends Expr[A]
 case class Divide[A](a: A, b: A)         extends Expr[A]
 ```
 
-That's much better, because this allows us to build our desired awesome
-transformation:
+That's much better, because this allows us express our evaluations as:
 ```scala 
 def transformation(exp: Expr[Double]): Double = exp match {
   case IntValue(v) => v.toDouble
@@ -122,7 +121,7 @@ def transformation(exp: Expr[Double]): Double = exp match {
   case Divide(d1, d2) => d1 / d2
 } 
 ```
-Such transformation is what we aim for, because it doesn't look like
+Such evaluation is what we aim for, because it doesn't look like
 recursion. It looks more like a set of rules, which we can **apply** to
 a recursive structure with some blackbox tool which will recursively
 build the result.
@@ -158,12 +157,11 @@ Wait, why did we need this`Fix` thing?
 
 ### A step back
 
-First, we wanted a transformation which doesn't look like recursion,
-but like a simple, flat set of rules. 
+We wanted to use evaluation definition which doesn't look like recursion. 
 
-A transformation which takes:
+We are looking for a tool which takes:
 - A recursive expression of type Expr, 
-- a function which evaluates `Expr => Double`  
+- a function which evaluates a single simple `Expr => Double`  
   For example `case Sum(d1, d2) => d1 + d2`
 
 To be able to express such rules, we needed to go from `Expr` to `Expr[A]`.
@@ -173,8 +171,7 @@ To avoid issues with nested types, we introduced `Fix[Expr]`
 
 Once we have:
 - A polymorphic recursive structure based on `Expr[A]`
-- A transformation expressed as a set of rules for 
-  each sub-type (`Expr[B] => B`)
+- An evaluation recipe expressed as a set of rules for  each sub-type (`Expr[B] => B`)
 - A `Fix[F[_]]` wrapper
 
 We can now use a tool to put this all together. Such tool is called...
@@ -225,10 +222,10 @@ The Matryoshka library does catamorphism for you:
 
 val recursiveExpr: Fix[Expr] = ??? // your tree
 
-def transformation(expr: Expr[Double]): Double = ???
+def evalToDouble(expr: Expr[Double]): Double = ???
 
 // the magic call
-rcursiveExpression.cata(transformation) // returns Double
+rcursiveExpression.cata(evalToDouble) // returns Double
 ```
 
 The `.cata()` call runs the whole folding process and constructs 
@@ -238,3 +235,5 @@ indiviual node types.
 ### Expression functor
 
 Matryoshka's `.cata()` is a blackbox, but it has one more requirement.
+It's mechanism assumes that a `Functor` instance is available for your datatype.
+
