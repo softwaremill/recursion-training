@@ -36,5 +36,5 @@ object Ex03_Catamorphism extends App {
 
   implicit val ExprFunctor: Functor[Expr] = ??? // TODO
 
-  println(s"Expression: $sumExpr\nExpr evaluated to double: ${sumExpr.cata(transformation)}")
+  println(s"Expression: $sumExpr\nExpr evaluated to double: ${sumExpr.cata(evalToDouble)}")
 }
