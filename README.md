@@ -276,3 +276,68 @@ def evalToDouble(expr: Expr[Double]): Double
   
 val evalToDouble: Algebra[Expr, Double]
 ```
+
+### Some syntax sugar to work with Fix
+
+Remember this?
+```scala
+Fix(Sum(Fix(IntValue[Fix[Expr]](10)), Fix(IntValue[Fix[Expr]](5))))
+```
+
+There`s some syntax sugar to help:
+```scala
+Sum(IntValue[Fix[Expr]](10).embed, IntValue[Fix[Expr]](5).embed).embed
+```
+
+Handy especially for larger expressions (see exercise 03). To unpack from `Fix`, you can
+use `unFix`:
+
+```scala
+val fixedSum: Fix[Expr] = 
+  Sum(
+    IntValue[Fix[Expr]](10).embed, 
+    IntValue[Fix[Expr]](5).embed
+  ).embed
+  
+fixedSum.unFix match {
+  case Sum(...) =>
+}
+``` 
+
+`unFix` is fine, but instead use `.project` which does the same, but is a more general
+function which work on other recursive wrappers. Sorry for the spoiler, but `Fix` is not
+the only one around, and you don't want to get tied directly to it! 
+
+### Transforming recursive expressions
+
+Let's say we have an `Expr` and we want to optimize it to express `Multiply(x, x)` as `Square(x)`.
+We'd like to have a tool which walks our tree and **maps** a given `Expr` to another `Expr`
+
+// TODO check Pawel's talk
+
+```
+           Divide                                     Divide
+           /    \                                     /    \
+DecValue(5.2)   Multiply         -->       DecValue(5.2) Square(10)
+                  / \                               
+       IntValue(10)  IntValue(10)                   
+```
+
+We are looking for a function like:
+
+```scala
+  def mapNode(t: Fix[Expr])(f: Fix[Expr] => Fix[Expr])
+  
+  def optimize(expr: Fix[Expr]): Fix[Expr] = expr.project match {
+    case Multiply(a, b) if (a == b) => Square(a)      
+    case other => other
+  }
+  
+  val optimizedExpr = mapNode(exprTree)(optimize)
+```
+
+Matroysha offers such a tool, and it's called `transCataT`:
+
+```scala
+  val optimizedExpr: Fix[Expr] = exprTee.transCataT(optimize) 
+```
