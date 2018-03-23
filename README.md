@@ -112,8 +112,8 @@ case class Divide[A](a: A, b: A)         extends Expr[A]
 ```
 
 That's much better, because this allows us express our evaluations as:
-```scala 
-def transformation(exp: Expr[Double]): Double = exp match {
+```scala
+def evalToDouble(exp: Expr[Double]): Double = exp match {
   case IntValue(v) => v.toDouble
   case DecValue(v) => v
   case Sum(d1, d2) => d1 + d2
@@ -270,7 +270,7 @@ This is finally all what we need! Here's a summary of our ingredients:
 Our evaluation function (point 3.) is called an **Algebra**. From Matryoshka:
 
 ```scala
-type Algebra[F[_], A] = scala.Function1[F[A], A]
+type Algebra[F[_], A] = F[A] => A
     
 def evalToDouble(expr: Expr[Double]): Double
   
@@ -341,3 +341,64 @@ Matroysha offers such a tool, and it's called `transCataT`:
 ```scala
   val optimizedExpr: Fix[Expr] = exprTee.transCataT(optimize) 
 ```
+
+### cataM
+
+Sometimes our evaluation produces a wrapped value. Suppose we want to evaluate the
+expression to a Double, but handle division by zero by wrapping the result in an `Either`.
+Here's our new evaluation:
+
+```scala
+def evalToDouble(exp: Expr[Double]): \/[String, Double] = exp match {
+  case IntValue(v) => v.toDouble.right
+  case DecValue(v) => v.right
+  case Sum(d1, d2) => (d1 + d2).right
+  case Multiply(d1, d2) => (d1 * d2).right
+  case Divide(d1, d2) => 
+  if (d2 == 0) 
+    (d1 / d2).right
+  else
+    "Division by zero!".left
+  case Square(d) => (d * d).right
+} 
+```
+
+We can't just use `cata`, because `cata` works with `Algebra`.  
+
+```scala
+type Algebra[F[_], A] = F[A] => A
+
+// F[A] => M[A], where M[A] means Either[String, A]
+def evalToDouble(exp: Expr[Double]): Either[String, Double] 
+```
+`Algebra` is a function `type Algebra[F[_], A] = F[A] => A`, while our new evaluation is
+of type `F[A] => M[A]`. If our evaluation has such signature, we can use **cataM**:
+
+```scala
+val correctExpr: Fix[Expr] =
+  Sum(
+    DecValue[Fix[Expr]](5.2).embed,
+    Divide(
+      DecValue[Fix[Expr]](3.0).embed,
+      DecValue[Fix[Expr]](3.0).embed
+    ).embed
+  ).embed
+
+val incorrectExpr: Fix[Expr] =
+  Sum(
+    DecValue[Fix[Expr]](5.2).embed,
+    Divide(
+      DecValue[Fix[Expr]](3.0).embed,
+      DecValue[Fix[Expr]](0.0).embed // !!!!!!!!
+    ).embed
+  ).embed 
+  
+correctExpr.cataM(evalToDouble) // Right(6.2)
+incorrectExpr.cataM(evalToDouble) // Left("Division by zero!")
+```
+
+However, there's one more requirement. Our `Functor[Expr]` is not enough, Matryoshka needs
+a `Traverse[Expr]`.  
+Advice: Instead of writing a `Functor` for your recursive data type, write a `Traverse`. It is
+also a `Functor`, it's pretty much the same amount of work, and it may become useful in case
+you need `cataM`.

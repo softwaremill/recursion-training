@@ -1,6 +1,7 @@
 package training.recursion.ex03
 
-import scalaz.Functor
+import scalaz._
+import Scalaz._
 
 // -------------------- the DSL --------------------
 sealed trait Expr[A]
@@ -13,7 +14,7 @@ case class Divide[A](a: A, b: A)   extends Expr[A]
 case class Square[A](a: A)         extends Expr[A]
 // -------------------------------------------------
 
-object Ex03_Catamorphism extends App {
+object Ex03_Catamorphism extends App with Ex03_Traverse {
 
   import matryoshka.data._
   import matryoshka._
@@ -67,4 +68,42 @@ object Ex03_Catamorphism extends App {
   val optimizedExpr = initialExpr.transCataT(optimize)
   println(optimizedExpr)
 
+  // cataM
+
+  // AlgebraM
+  def evalToDoubleOrErr(exp: Expr[Double]): \/[String, Double] = exp match {
+    case IntValue(v)      => v.toDouble.right
+    case DecValue(v)      => v.right
+    case Sum(d1, d2)      => (d1 + d2).right
+    case Multiply(d1, d2) => (d1 * d2).right
+    case Divide(d1, d2) =>
+      if (d2 == 0)
+        (d1 / d2).right
+      else
+        "Division by zero!".left
+    case Square(d) => (d * d).right
+  }
+
+  val correctExpr: Fix[Expr] =
+    Sum(
+      DecValue[Fix[Expr]](5.2).embed,
+      Divide(
+        DecValue[Fix[Expr]](3.0).embed,
+        DecValue[Fix[Expr]](3.0).embed
+      ).embed
+    ).embed
+
+  val incorrectExpr: Fix[Expr] =
+    Sum(
+      DecValue[Fix[Expr]](5.2).embed,
+      Divide(
+        DecValue[Fix[Expr]](3.0).embed,
+        DecValue[Fix[Expr]](0.0).embed // !!!!!!!!
+      ).embed
+    ).embed
+
+  implicit val traverse = traverseExpr
+
+  correctExpr.cataM(evalToDoubleOrErr)   // Right(6.2)
+  incorrectExpr.cataM(evalToDoubleOrErr) // Left("Division by zero!")
 }
