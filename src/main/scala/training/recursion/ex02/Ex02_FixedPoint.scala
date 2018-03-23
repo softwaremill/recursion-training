@@ -36,6 +36,13 @@ object Ex02_FixedPoint extends App {
 
   val fixedIntExpr: Fix[Expr] = Fix(IntValue[Fix[Expr]](10))
 
+  val fixedSum: Fix[Expr] = Fix(
+    Sum(
+      Fix(IntValue[Fix[Expr]](10)),
+      Fix(DecValue[Fix[Expr]](5.5))
+    )
+  )
+
   val fixedDivision: Fix[Expr] = ??? // TODO fix the division expression to match type
 
 }
