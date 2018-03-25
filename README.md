@@ -402,3 +402,43 @@ a `Traverse[Expr]`.
 Advice: Instead of writing a `Functor` for your recursive data type, write a `Traverse`. It is
 also a `Functor`, it's pretty much the same amount of work, and it may become useful in case
 you need `cataM`.
+
+## Anamorphism
+
+Cata is a bottom-up folding of a structure. Anamorphism works in the opposite direction
+and allows to unfold a structure. For this we need the dual of `Algebra` - `Coalgebra`:
+```scala
+type Coalgebra[F[_], A] = A => F[A]
+``` 
+
+Such morphism is called an unfold, because it takes an object and recursively builds up a structure
+basing on it.
+```scala
+
+// Int => Expr[Int]
+val toBinary: Coalgebra[Expr, Int] = (n: Int) =>
+n match {
+  case 0 => IntValue(0)
+  case 1 => IntValue(1)
+  case 2 => IntValue(2)
+  case _ if n % 2 == 0 => Multiply(2, n / 2)
+  case _ => Sum(1, n - 1)
+}
+
+val toText: Algebra[Expr, String] = {
+case IntValue(v)    => v.toString
+case Sum(a, b)      => s"($a + $b)"
+case Multiply(a, b) => s"($a * $b)"
+}
+
+// unfold with anamorphism
+val expr = 31.ana.apply[Fix[Expr]](toBinary)
+// and now fold with catamorphism 
+val binAsStr = expr.cata(toText) // (1 + (2 * (1 + (2 * (1 + (2 * (1 + 2)))))))
+```
+
+A composition of ana+cata is called **hylomorphism**
+
+```scala
+val binAsStr = 31.hylo(toText, toBinary)
+```
