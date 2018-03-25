@@ -442,3 +442,49 @@ A composition of ana+cata is called **hylomorphism**
 ```scala
 val binAsStr = 31.hylo(toText, toBinary)
 ```
+
+## Paramorphism
+
+Also a fold, very similar to catamorphism. However, it adds one more extra feature - 
+with paramorphism, you not only build current state basing on evaluation of previous states,
+buy you also have access to these states. Confusing? Here's an example:  
+Let's say we want to use a special algorithm for a specific case: 
+
+We want to print `(3 + -5)` as `(5 - 3)` for better readability. 
+
+With cata, we don't have enough information except Strings:
+
+```scala
+case Sum(left: String, right: String) => ??? // what was left and right before their evaluation?
+```
+
+Parsing Strings here doesn't seem like a good idea. With para, we can use a richer kind of algebra:
+
+```scala
+case Sum((leftSrc, leftStr), (rightSrc, rightStr)) =>
+  leftSrc.project match {
+    case IntValue(a) =>
+      rightSrc.project match {
+        case IntValue(b) if a > 0 && b < 0 => s"($a - ${-b})"
+        case IntValue(b) if b > 0 && a < 0 => s"($b - ${-a})"
+        case _                             => s"$leftStr + $rightStr"
+      }
+    case _ => s"$leftStr + $rightStr"
+  }
+```
+
+This is a different kind of Algebra: `Expr[(Fix[Expr], String)] => String`, so it's
+`F[(T, A)] => A`, where `T` means `Fix[Expr]` for this particular case.
+To be more precise, it's
+```scala
+type GAlgebra[W[_], F[_], A] = F[W[A]] => A
+```
+Where in our case `F[W[A]]` is `Expr[Tuple2[T, A]]`.   
+Paramorphism is useful when we need to know more about node's childrens' structure in order to fully
+evaulate that node.
+Paramorphisms are generalized folds with access to the input argument corresponding 
+to the most recent state of the computation.
+However, para is limited, because we only know the source **structure**. If you need more,
+meet histomorphism.
+
+TBC
