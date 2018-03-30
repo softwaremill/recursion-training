@@ -16,7 +16,6 @@ case class Square[A](a: A)         extends Expr[A]
 // -------------------------------------------------
 
 object Ex05_Paramorphism extends App with Ex05_Traverse {
-  implicit val exprFunctor: Functor[Expr] = traverseExpr
 
   def int(i: Int): Fix[Expr] = IntValue[Fix[Expr]](i).embed
 

@@ -16,8 +16,6 @@ case class Multiply[A](a: A, b: A) extends Expr[A]
 
 object Ex04_Anamorphism extends App with Ex04_Traverse {
 
-  implicit val fun: Functor[Expr] = traverseExpr
-
   // Int => Expr[Int]
   val toBinary: Coalgebra[Expr, Int] = (n: Int) =>
     n match {

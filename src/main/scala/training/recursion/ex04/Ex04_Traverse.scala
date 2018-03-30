@@ -4,7 +4,8 @@ import scalaz.Scalaz._
 import scalaz._
 
 trait Ex04_Traverse {
-  val traverseExpr: Traverse[Expr] = new Traverse[Expr] {
+  // it's also a Functor[Expr]
+  implicit val traverseExpr: Traverse[Expr] = new Traverse[Expr] {
 
     override def traverseImpl[G[_], A, B](fa: Expr[A])(f: A => G[B])(implicit G: Applicative[G]): G[Expr[B]] =
       fa match {
