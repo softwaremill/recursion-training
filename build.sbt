@@ -14,6 +14,8 @@ addCompilerPlugin("io.tryp" % "splain" % "0.2.10" cross CrossVersion.patch)
 
 addCompilerPlugin("com.softwaremill.clippy" %% "plugin" % "0.5.3" classifier "bundle")
 
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6")
+
 scalacOptions ++= Seq(
   "-deprecation",                   // Emit warning and location for usages of deprecated APIs.
   "-encoding", "UTF-8",             // Specify character encoding used by source files.
