@@ -1,65 +1,64 @@
-Recursion schemes
-=========================
+= Recursion schemes
 
 This repository contains documentation, samples and exercises for the Recursion Schemes workshop.
 
-**Running**  
+=== Running
 Load this project in sbt and just launch `run`, then select the exercise you'd like to execute.
 
-## Introduction
+== Introduction
 
+[.lead]
 Recursive structures are a common pattern and most developers have worked with such data at least a few times. 
 
-### Trees
+=== Trees
 **Nodes** and **leafs**
 
-```
+
            root-node
            /   \    
   child-node   leaf
   /     \
-leaf    leaf  
-```
+leaf    leaf
 
-### Json
-
-TODO
-
-### List
+=== Json
 
 TODO
 
-### ASTs
+=== List
 
-```sql
-SELECT * FROM users u WHERE u.age > 25 AND UPPER(u.name) LIKE "J%"  
-```
+TODO
 
-```
-FILTER:
-- source:  
-    SELECT  
-        -- selection: *  
-        -- from: users  
-- criteria:  
-    AND  
-        - GT(u.age, 25)  
-        - LIKE(  
-            UPPER(  
-                u.name)  
-            J%)      
-```
+=== ASTs
 
-### What you can do with recursive data
+[source, sql]
+SELECT * FROM users u WHERE u.age > 25 AND UPPER(u.name) LIKE "J%"
+
+
+    FILTER:
+    - source:
+        SELECT
+            -- selection: *
+            -- from: users
+    - criteria:
+        AND
+            - GT(u.age, 25)
+            - LIKE(
+                UPPER(
+                    u.name)
+                J%)
+
+
+=== What you can do with recursive data
 - Print
 - Translate into another structure
 - Enrich
 - Optimize
 
 
-## Manual recursion 
+=== Manual recursion
 
-```scala
+[source, scala]
+----
 sealed trait Expr
 
 case class IntValue(v: Int)           extends Expr
@@ -76,32 +75,37 @@ e match {
   case Multiply(e1, e2) => eval(e1) * eval(e2)
   case Divide(e1, e2)   => eval(e1) / eval(e2)
 }
-```
+----
 
-## Fixed point datatypes
+== Fixed point datatypes
 
-### Making an ADT polymorphic
+=== Making an ADT polymorphic
 
 Ideally we'd love to have something more elegant.
 We are looking for a tool which takes:
-- A recursive expression of type Expr, 
-- a function which evaluates `Expr => Double`  
+
+- A recursive expression of type Expr,
+- a function which evaluates `Expr => Double`
   For example `case Sum(d1, d2) => d1 + d2`
+
 Such tool evaluates whole expression to a `Double`
 
 Types like `Sum(a: Expr, b: Expr)` force us to deal only with Exprs. 
 Ideally we'd like to have our eval definition to look like:
-```scala
+
+[source, scala]
+----
 // does not compile, but it's only an illustration of a direction
 def eval(e: Expr): Double = 
 e match {
   case Sum(dbl1: Double, dbl2: Double) => dbl1 + dbl2 // etc
 } 
-``` 
+----
 
 Let's make our expression **polymorphic**.
 
-```scala
+[source, scala]
+----
 sealed trait Expr[A]
 
 case class IntValue[A](v: Int)           extends Expr[A]
@@ -109,10 +113,12 @@ case class DecValue[A](v: Double)        extends Expr[A]
 case class Sum[A](a: A, b: A)            extends Expr[A]
 case class Multiply[A](a: A, b: A)       extends Expr[A]
 case class Divide[A](a: A, b: A)         extends Expr[A]
-```
+----
 
 That's much better, because this allows us express our evaluations as:
-```scala
+
+[source, scala]
+----
 def evalToDouble(exp: Expr[Double]): Double = exp match {
   case IntValue(v) => v.toDouble
   case DecValue(v) => v
@@ -120,14 +126,15 @@ def evalToDouble(exp: Expr[Double]): Double = exp match {
   case Multiply(d1, d2) => d1 * d2
   case Divide(d1, d2) => d1 / d2
 } 
-```
+----
+
 Such evaluation is what we aim for, because it doesn't look like
 recursion. It looks more like a set of rules, which we can **apply** to
 a recursive structure with some blackbox tool which will recursively
 build the result.
 
 But let's stop here for a while, because polymorphic expressions
-come with a cost... First, consider a trivial expression:  
+come with a cost... First, consider a trivial expression:
 `val intVal = IntValue[Unit](10) // Expr[Unit]`
 
 What about more complex expressions?
@@ -143,11 +150,11 @@ What about more complex expressions?
 ### Fixing nested Exprs
 
 how to deal with types like `Expr[Expr[Expr[A]]]`?
-Let's wrap in:  
+Let's wrap in:
 
 ```scala
 case class Fix[F[_]](unFix: F[Fix[F]])
-  
+
 val fixedIntExpr: Fix[Expr] = Fix(IntValue[Fix[Expr]](10))
 ```
 
@@ -157,11 +164,11 @@ Wait, why did we need this`Fix` thing?
 
 ### A step back
 
-We wanted to use evaluation definition which doesn't look like recursion. 
+We wanted to use evaluation definition which doesn't look like recursion.
 
 We are looking for a tool which takes:
-- A recursive expression of type Expr, 
-- a function which evaluates a single simple `Expr => Double`  
+- A recursive expression of type Expr,
+- a function which evaluates a single simple `Expr => Double`
   For example `case Sum(d1, d2) => d1 + d2`
 
 To be able to express such rules, we needed to go from `Expr` to `Expr[A]`.
@@ -200,14 +207,14 @@ DecValue(5.2)   Sum            -->   DecValue(5.2)  Sum
             Divide                             Divide
            /    \                              /    \
 DecValue(5.2)   Sum            -->            5.2  15.0
-                / \                                 
-             10.0  5.0                  
+                / \
+             10.0  5.0
 ```
 
 ```
-            Divide             -->            5.2 / 15.0                             
-           /    \                              
-         5.2   15.0            
+            Divide             -->            5.2 / 15.0
+           /    \
+         5.2   15.0
 ```
 
 Going **bottom-up**, we use our set of rules on leafs, then we build
@@ -228,7 +235,7 @@ def evalToDouble(expr: Expr[Double]): Double
 rcursiveExpression.cata(evalToDouble) // returns Double
 ```
 
-The `.cata()` call runs the whole folding process and constructs 
+The `.cata()` call runs the whole folding process and constructs
 the final `Double` value for you, provided just a set of rules for
 indiviual node types.
 
@@ -244,14 +251,14 @@ to do `Sum(f(a1), f(a2))`. Such recipe has to be provided for all
 possible cases of `Expr`.
 
 ```scala
-import scalaz.Functor  
+import scalaz.Functor
 
 implicit val exprFunctor: Functor[Expr] = new Functor[Expr] {
   override def map[A, B](expr: Expr[A])(f: A => B): Expr[B] = expr match {
     case IntVal(v) => IntVal[B](v)
     case Sum(a1, a2) => Sum(f(a1), f(a2))
     case ... // etc.
-  }      
+  }
 }
 ```
 
@@ -271,9 +278,9 @@ Our evaluation function (point 3.) is called an **Algebra**. From Matryoshka:
 
 ```scala
 type Algebra[F[_], A] = F[A] => A
-    
+
 def evalToDouble(expr: Expr[Double]): Double
-  
+
 val evalToDouble: Algebra[Expr, Double]
 ```
 
@@ -293,20 +300,20 @@ Handy especially for larger expressions (see exercise 03). To unpack from `Fix`,
 use `unFix`:
 
 ```scala
-val fixedSum: Fix[Expr] = 
+val fixedSum: Fix[Expr] =
   Sum(
-    IntValue[Fix[Expr]](10).embed, 
+    IntValue[Fix[Expr]](10).embed,
     IntValue[Fix[Expr]](5).embed
   ).embed
-  
+
 fixedSum.unFix match {
   case Sum(...) =>
 }
-``` 
+```
 
 `unFix` is fine, but instead use `.project` which does the same, but is a more general
 function which work on other recursive wrappers. Sorry for the spoiler, but `Fix` is not
-the only one around, and you don't want to get tied directly to it! 
+the only one around, and you don't want to get tied directly to it!
 
 ### Transforming recursive expressions
 
@@ -319,27 +326,27 @@ We'd like to have a tool which walks our tree and **maps** a given `Expr` to ano
            Divide                                     Divide
            /    \                                     /    \
 DecValue(5.2)   Multiply         -->       DecValue(5.2) Square(10)
-                  / \                               
-       IntValue(10)  IntValue(10)                   
+                  / \
+       IntValue(10)  IntValue(10)
 ```
 
 We are looking for a function like:
 
 ```scala
   def mapNode(t: Fix[Expr])(f: Fix[Expr] => Fix[Expr])
-  
+
   def optimize(expr: Fix[Expr]): Fix[Expr] = expr.project match {
-    case Multiply(a, b) if (a == b) => Square(a)      
+    case Multiply(a, b) if (a == b) => Square(a)
     case other => other
   }
-  
+
   val optimizedExpr = mapNode(exprTree)(optimize)
 ```
 
 Matroysha offers such a tool, and it's called `transCataT`:
 
 ```scala
-  val optimizedExpr: Fix[Expr] = exprTee.transCataT(optimize) 
+  val optimizedExpr: Fix[Expr] = exprTee.transCataT(optimize)
 ```
 
 ### cataM
@@ -354,22 +361,22 @@ def evalToDouble(exp: Expr[Double]): \/[String, Double] = exp match {
   case DecValue(v) => v.right
   case Sum(d1, d2) => (d1 + d2).right
   case Multiply(d1, d2) => (d1 * d2).right
-  case Divide(d1, d2) => 
-  if (d2 == 0) 
+  case Divide(d1, d2) =>
+  if (d2 == 0)
     (d1 / d2).right
   else
     "Division by zero!".left
   case Square(d) => (d * d).right
-} 
+}
 ```
 
-We can't just use `cata`, because `cata` works with `Algebra`.  
+We can't just use `cata`, because `cata` works with `Algebra`.
 
 ```scala
 type Algebra[F[_], A] = F[A] => A
 
 // F[A] => M[A], where M[A] means Either[String, A]
-def evalToDouble(exp: Expr[Double]): Either[String, Double] 
+def evalToDouble(exp: Expr[Double]): Either[String, Double]
 ```
 `Algebra` is a function `type Algebra[F[_], A] = F[A] => A`, while our new evaluation is
 of type `F[A] => M[A]`. If our evaluation has such signature, we can use **cataM**:
@@ -391,14 +398,14 @@ val incorrectExpr: Fix[Expr] =
       DecValue[Fix[Expr]](3.0).embed,
       DecValue[Fix[Expr]](0.0).embed // !!!!!!!!
     ).embed
-  ).embed 
-  
+  ).embed
+
 correctExpr.cataM(evalToDouble) // Right(6.2)
 incorrectExpr.cataM(evalToDouble) // Left("Division by zero!")
 ```
 
 However, there's one more requirement. Our `Functor[Expr]` is not enough, Matryoshka needs
-a `Traverse[Expr]`.  
+a `Traverse[Expr]`.
 Advice: Instead of writing a `Functor` for your recursive data type, write a `Traverse`. It is
 also a `Functor`, it's pretty much the same amount of work, and it may become useful in case
 you need `cataM`.
@@ -409,7 +416,7 @@ As we learned, cata is a bottom-up folding of a structure. Anamorphism works in 
 and allows to unfold a structure. For this we need the dual of `Algebra` - `Coalgebra`:
 ```scala
 type Coalgebra[F[_], A] = A => F[A]
-``` 
+```
 
 Such morphism is called an unfold, because it takes an object and recursively builds up a structure
 basing on it.
@@ -433,7 +440,7 @@ case Multiply(a, b) => s"($a * $b)"
 
 // unfold with anamorphism
 val expr = 31.ana.apply[Fix[Expr]](toBinary)
-// and now fold with catamorphism 
+// and now fold with catamorphism
 val binAsStr = expr.cata(toText) // (1 + (2 * (1 + (2 * (1 + (2 * (1 + 2)))))))
 ```
 
@@ -445,12 +452,12 @@ val binAsStr = 31.hylo(toText, toBinary)
 
 ## Paramorphism
 
-Also a fold, very similar to catamorphism. However, it adds one more extra feature - 
+Also a fold, very similar to catamorphism. However, it adds one more extra feature -
 with paramorphism, you not only build current state basing on evaluation of previous states,
-buy you also have access to these states. Confusing? Here's an example:  
-Let's say we want to use a special algorithm for a specific case: 
+buy you also have access to these states. Confusing? Here's an example:
+Let's say we want to use a special algorithm for a specific case:
 
-We want to print `(3 + -5)` as `(5 - 3)` for better readability. 
+We want to print `(3 + -5)` as `(5 - 3)` for better readability.
 
 With cata, we don't have enough information except Strings:
 
@@ -479,10 +486,10 @@ To be more precise, it's
 ```scala
 type GAlgebra[W[_], F[_], A] = F[W[A]] => A
 ```
-Where in our case `F[W[A]]` is `Expr[Tuple2[T, A]]`.   
+Where in our case `F[W[A]]` is `Expr[Tuple2[T, A]]`.
 Paramorphism is useful when we need to know more about node's childrens' structure in order to fully
 evaulate that node.
-Paramorphisms are generalized folds with access to the input argument corresponding 
+Paramorphisms are generalized folds with access to the input argument corresponding
 to the most recent state of the computation.
 However, para is limited, because we only know the source **structure**. If you need more,
 meet histomorphism.
@@ -491,7 +498,7 @@ meet histomorphism.
 
 Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
 could access pairs of (child_evaluated + child_sourceExpression), in histomorphism we work with
-(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we 
+(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we
 use `Cofree`.
 
 ### Cofree
@@ -511,7 +518,7 @@ case class IntValue[A](v: Int)     extends Expr[A]
 case class DecValue[A](v: Double)  extends Expr[A]
 case class Sum[A](a: A, b: A)      extends Expr[A]
 case class Square[A](a: A)         extends Expr[A]
-``` 
+```
 
 we can label any `Expr` with an `ExprType`:
 
@@ -521,7 +528,7 @@ case object IntExpr extends ExprType
 case object DecExpr extends ExprType
 ```
 
-Our rules can be simple: a sum of integers is an integer. A sum of (int + dec) is a decimal. A square of a type 
+Our rules can be simple: a sum of integers is an integer. A sum of (int + dec) is a decimal. A square of a type
 has the same type. A **tagged** expression is of type `Cofree[Expr, ExprType]`. Such object cosists of:
 
 1. A `head: ExprType` which is the tag (label) placed on the node.
@@ -535,4 +542,4 @@ val inferType: Algebra[Expr, Cofree[Expr, ExprType]] = {
   case DecValue(v) => Cofree.apply(DecExpr, DecValue(v))
   case Sum(a, b) => ??? // a: Cofree[Expr, ExprType]]
 }
-```  
+```

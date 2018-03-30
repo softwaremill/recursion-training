@@ -1,0 +1,134 @@
+= Recursion schemes
+
+This repository contains documentation, samples and exercises for the Recursion Schemes workshop.
+
+=== Running
+Load this project in sbt and just launch `run`, then select the exercise you'd like to execute.
+
+== Introduction
+
+[.lead]
+Recursive structures are a common pattern and most developers have worked with such data at least a few times. 
+
+=== Trees
+**Nodes** and **leafs**
+
+
+           root-node
+           /   \    
+  child-node   leaf
+  /     \
+leaf    leaf
+
+=== Json
+
+TODO
+
+=== List
+
+TODO
+
+=== ASTs
+
+[source, sql]
+SELECT * FROM users u WHERE u.age > 25 AND UPPER(u.name) LIKE "J%"
+
+
+    FILTER:
+    - source:
+        SELECT
+            -- selection: *
+            -- from: users
+    - criteria:
+        AND
+            - GT(u.age, 25)
+            - LIKE(
+                UPPER(
+                    u.name)
+                J%)
+
+
+=== What you can do with recursive data
+- Print
+- Translate into another structure
+- Enrich
+- Optimize
+
+
+=== Manual recursion
+
+[source, scala]
+----
+sealed trait Expr
+
+case class IntValue(v: Int)           extends Expr
+case class DecValue(v: Double)        extends Expr
+case class Sum(a: Expr, b: Expr)      extends Expr
+case class Multiply(a: Expr, b: Expr) extends Expr
+case class Divide(a: Expr, b: Expr)   extends Expr
+  
+def eval(e: Expr): Double =
+e match {
+  case IntValue(v)      => v.toDouble
+  case DecValue(v)      => v
+  case Sum(e1, e2)      => eval(e1) + eval(e2)
+  case Multiply(e1, e2) => eval(e1) * eval(e2)
+  case Divide(e1, e2)   => eval(e1) / eval(e2)
+}
+----
+
+== Fixed point datatypes
+
+=== Making an ADT polymorphic
+
+Ideally we'd love to have something more elegant.
+We are looking for a tool which takes:
+
+- A recursive expression of type Expr,
+- a function which evaluates `Expr => Double`
+  For example `case Sum(d1, d2) => d1 + d2`
+
+Such tool evaluates whole expression to a `Double`
+
+Types like `Sum(a: Expr, b: Expr)` force us to deal only with Exprs. 
+Ideally we'd like to have our eval definition to look like:
+
+[source, scala]
+----
+// does not compile, but it's only an illustration of a direction
+def eval(e: Expr): Double = 
+e match {
+  case Sum(dbl1: Double, dbl2: Double) => dbl1 + dbl2 // etc
+} 
+----
+
+Let's make our expression **polymorphic**.
+
+[source, scala]
+----
+sealed trait Expr[A]
+
+case class IntValue[A](v: Int)           extends Expr[A]
+case class DecValue[A](v: Double)        extends Expr[A]
+case class Sum[A](a: A, b: A)            extends Expr[A]
+case class Multiply[A](a: A, b: A)       extends Expr[A]
+case class Divide[A](a: A, b: A)         extends Expr[A]
+----
+
+That's much better, because this allows us express our evaluations as:
+
+[source, scala]
+----
+def evalToDouble(exp: Expr[Double]): Double = exp match {
+  case IntValue(v) => v.toDouble
+  case DecValue(v) => v
+  case Sum(d1, d2) => d1 + d2
+  case Multiply(d1, d2) => d1 * d2
+  case Divide(d1, d2) => d1 / d2
+} 
+----
+
+Such evaluation is what we aim for, because it doesn't look like
+recursion. It looks more like a set of rules, which we can **apply** to
+a recursive structure with some blackbox tool which will recursively
+build the result.
