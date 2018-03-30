@@ -405,7 +405,7 @@ you need `cataM`.
 
 ## Anamorphism
 
-Cata is a bottom-up folding of a structure. Anamorphism works in the opposite direction
+As we learned, cata is a bottom-up folding of a structure. Anamorphism works in the opposite direction
 and allows to unfold a structure. For this we need the dual of `Algebra` - `Coalgebra`:
 ```scala
 type Coalgebra[F[_], A] = A => F[A]
@@ -487,4 +487,52 @@ to the most recent state of the computation.
 However, para is limited, because we only know the source **structure**. If you need more,
 meet histomorphism.
 
-TBC
+## Histomorphism
+
+Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
+could access pairs of (child_evaluated + child_sourceExpression), in histomorphism we work with
+(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we 
+use `Cofree`.
+
+### Cofree
+
+Cofree is a very broad concept. It's actually a "comonad" with quite a few interesting attributes and applications.
+For the sake of this course, let's consider `Cofree[S, A]` to be a **pair** of:
+
+1. a value of type A
+2. A recursive expression S which can consist of deeper elements of type Cofree.
+
+Cofree is often used to construct labelled expression. Each node in an expression gets an extra label (tag).
+For a simple DSL:
+```scala
+sealed trait Expr[A]
+
+case class IntValue[A](v: Int)     extends Expr[A]
+case class DecValue[A](v: Double)  extends Expr[A]
+case class Sum[A](a: A, b: A)      extends Expr[A]
+case class Square[A](a: A)         extends Expr[A]
+``` 
+
+we can label any `Expr` with an `ExprType`:
+
+```scala
+sealed trait ExprType
+case object IntExpr extends ExprType
+case object DecExpr extends ExprType
+```
+
+Our rules can be simple: a sum of integers is an integer. A sum of (int + dec) is a decimal. A square of a type 
+has the same type. A **tagged** expression is of type `Cofree[Expr, ExprType]`. Such object cosists of:
+
+1. A `head: ExprType` which is the tag (label) placed on the node.
+2. A `tail: Expr[Cofree[Expr, ExprType]]` which is the expression itself (`Expr[A]`) where `A` is a deeper level of `Cofree`.
+
+We can recursively apply such labelling with catamorphism, using an `Algebra[Expr, Cofree[Expr, ExprType]]`
+
+```scala
+val inferType: Algebra[Expr, Cofree[Expr, ExprType]] = {
+  case IntValue(v) => Cofree.apply(IntExpr, IntValue(v))
+  case DecValue(v) => Cofree.apply(DecExpr, DecValue(v))
+  case Sum(a, b) => ??? // a: Cofree[Expr, ExprType]]
+}
+```  
