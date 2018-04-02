@@ -32,15 +32,19 @@ object Ex06_Cofree extends App with Ex06_Traverse {
     case Square(a)   => Cofree.apply(IntExpr, IntValue(10000))
   }
 
+  def toStr(exp: Expr[String]): String = exp match {
+    case IntValue(v) => v.toString
+    case DecValue(v) => v.toString
+    case Sum(d1, d2) => s"($d1 + $d2)"
+    case Square(d)   => s"($d^2)"
+  }
+
   val expr: Fix[Expr] = Sum(Square(Square(int(3)).embed).embed, Square(Square(Square(int(5)).embed).embed).embed).embed
 
   val typedExpr: Cofree[Expr, ExprType] = expr.cata(inferType)
 
   val toTypedStr: Algebra[EnvT[ExprType, Expr, ?], String] = {
-    case EnvT((exprType, IntValue(v))) => s"($v: $exprType)"
-    case EnvT((exprType, DecValue(v))) => s"($v: $exprType)"
-    case EnvT((exprType, Sum(a, b)))   => s"($a + $b): $exprType"
-    case EnvT((exprType, Square(a)))   => s"($a^2): $exprType"
+    case _ => ??? // TODO
   }
 
   println(typedExpr.cata(toTypedStr))
