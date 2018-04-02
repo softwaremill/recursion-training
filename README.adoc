@@ -503,14 +503,8 @@ Paramorphisms are generalized folds with access to the input argument correspond
 to the most recent state of the computation.
 
 However, para is limited, because we only know the source **structure**. If you need more,
-meet histomorphism.
-
-== Histomorphism
-
-Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
-could access pairs of (child_evaluated + child_sourceExpression), in histomorphism we work with
-(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we
-use `Cofree`.
+see *histomorphism*. But let's take a break from morphisms and check out some other interesting
+concepts.
 
 === Cofree
 
@@ -559,21 +553,32 @@ val inferType: Algebra[Expr, Cofree[Expr, ExprType]] = {
 }
 ----
 
+`Cofree` is much more than a tuple with extras. It's a *fixed-point operator*. This means that it has the same power
+as `Fix`. Having an expression wrapped with `Cofree`, we can apply morphisms directly to it!
+
+[source, scala]
+val typedExpr: Cofree[Expr, ExprType] = expr.cata(inferType)
+
+// No need for Fix[]
+val toTypedStr: Algebra[EnvT[ExprType, Expr, ?], String] = {
+  case EnvT((exprType, Sum(a, b))) => s"($a + $b): $exprType" // (3 + 5.5): DecValue
+  case _ => "..."
+}
+
+This reveals one more mystery - there are more fixed point operators than just `Fix` and `Cofree`.
+
 == Fixed point operators
 
 So far we considered `Fix[]` to be a kind of type-level trick to deal with recursive expressions. For most applications
 such approach should be enough. Here's a bit more format explanation.
 
 In math, a fixed point of a function `f` is a value `a` such that
-```
-f(a) == a
-```
+
+    f(a) == a
 
 We can now say that `fix` is a function such that
 
-```
-fix(f) == f(fix(f))
-```
+    fix(f) == f(fix(f))
 
 Does this look familiar? For types, we had:
 
@@ -589,3 +594,18 @@ We can replace our previous usages of `Fix` with `Mu`.
 ==== Nu
 
 Nu can be used to represent infinite coinductive data (like streams).
+
+==== Cofree
+
+TODO (mention List, Free, Cofree)
+
+== Histomorphism
+
+Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
+could access pairs of (child_evaluated + child_sourceExpression), in histomorphism we work with
+(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we
+use `Cofree`.
+
+TODO example
+
+TBC
