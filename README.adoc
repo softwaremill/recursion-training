@@ -559,4 +559,33 @@ val inferType: Algebra[Expr, Cofree[Expr, ExprType]] = {
 }
 ----
 
-TBC
+== Fixed point operators
+
+So far we considered `Fix[]` to be a kind of type-level trick to deal with recursive expressions. For most applications
+such approach should be enough. Here's a bit more format explanation.
+
+In math, a fixed point of a function `f` is a value `a` such that
+```
+f(a) == a
+```
+
+We can now say that `fix` is a function such that
+
+```
+fix(f) == f(fix(f))
+```
+
+Does this look familiar? For types, we had:
+
+[source, scala]
+val fix = Fix[Expr]
+val expr: Expr[Fix[Expr]] = fix.unfix
+
+==== Mu
+
+Mu is a more restricted version of `Fix`. It can be used to represent inductive finite data.
+We can replace our previous usages of `Fix` with `Mu`.
+
+==== Nu
+
+Nu can be used to represent infinite coinductive data (like streams).
