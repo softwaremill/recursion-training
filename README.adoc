@@ -664,6 +664,9 @@ Another interesting `Birecursive[T]` (which means both `Recursive` and `Corecurs
 A free monad also can be run through morphisms! After all, free monads are often used to work with DSLs describing
 some programs. Such program description is similar to our `Expr[A]`.
 
+If you're familiar with free monads, you probably recognize `foldMap`. It's nothing more but a
+catamorphism!
+
 == Histomorphism
 
 Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
