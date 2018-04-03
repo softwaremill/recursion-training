@@ -2,6 +2,8 @@
 
 This repository contains documentation, samples and exercises for the Recursion Schemes workshop.
 
+TIP: "these things are easier to use than understand"
+
 === Running
 Load this project in sbt and just launch `run`, then select the exercise you'd like to execute.
 
@@ -695,3 +697,4 @@ been computed up to this point.
 - David Barri: Practical awesome recursion (https://japgolly.blogspot.com/2017/11/practical-awesome-recursion-ch-01.html)
 - Greg Pfeil: Recursion schemes (https://github.com/sellout/recursion-scheme-talk/blob/master/matryoshka.org)
 - Quasar (https://github.com/quasar-analytics/quasar)
+- Blog: Maciek Makowski (https://notepad.mmakowski.com/Recursion%20Schemes?revision=1a0cbb1a636e157a26f6a7175e91328cf26a2573#zygomorphism)
