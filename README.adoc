@@ -621,3 +621,10 @@ use `Cofree`.
 TODO example
 
 TBC
+
+== Sources and resources
+
+- Paweł Szulc: Going bananas with recursion schemes (https://www.youtube.com/watch?v=IlvJnkWH6CA)
+- David Barri: Practical awesome recursion (https://japgolly.blogspot.com/2017/11/practical-awesome-recursion-ch-01.html)
+- Greg Pfeil: Recursion schemes (https://github.com/sellout/recursion-scheme-talk/blob/master/matryoshka.org)
+- Quasar (https://github.com/quasar-analytics/quasar)
