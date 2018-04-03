@@ -671,9 +671,20 @@ could access pairs of (child_evaluated + child_sourceExpression), in histomorphi
 (child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we
 use `Cofree`.
 
-TODO example
+[source, scala]
+----
+val smartPrint: GAlgebra[Cofree[Expr, ?], Expr, String] = {
+    case Square(Cofree(a: String, history: Expr[Cofree[Expr, String]])) =>
+        history match {
+          case Sum(Cofree(a, aHistory), Cofree(b, bHistory)) => ...
+          case _ => ...
+        }
+    case _ => ...
+}
+----
 
-TBC
+We can `unpack` each node to desired depth, because history elements carry everything that has
+been computed up to this point.
 
 == Sources and resources
 
