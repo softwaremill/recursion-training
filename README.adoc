@@ -20,13 +20,25 @@ Recursive structures are a common pattern and most developers have worked with s
   /     \
 leaf    leaf
 
-=== Json
-
-TODO
-
 === List
 
-TODO
+Either a `Cons(a, List)` or `Nil`
+`Cons(a, Cons(b, Cons(c, Nil))) // List(a, b, c)`
+
+=== Json
+
+[source, scala]
+----
+sealed trait Json[+F]
+object Json {
+  case object      Null                              extends Json
+  final case class Bool  (value: Boolean)            extends Json[Nothing]
+  final case class Str   (value: String)             extends Json[Nothing]
+  final case class Num   (value: Double)             extends Json[Nothing]
+  final case class Arr[F](values: List[F])           extends Json[F]
+  final case class Obj[F](fields: List[(String, F)]) extends Json[F]
+}
+----
 
 === ASTs
 
