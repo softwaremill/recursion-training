@@ -595,8 +595,10 @@ We can now say that `fix` is a function such that
 Does this look familiar? For types, we had:
 
 [source, scala]
+----
 val fix = Fix[Expr]
 val expr: Expr[Fix[Expr]] = fix.unfix
+----
 
 ==== Mu
 
@@ -607,9 +609,60 @@ We can replace our previous usages of `Fix` with `Mu`.
 
 Nu can be used to represent infinite coinductive data (like streams).
 
+==== List
+[source, scala]
+----
+sealed abstract class ListF[A, B]
+final case class NilF[A, B]() extends ListF[A, B]
+final case class ConsF[A, B](head: A, tail: B) extends ListF[A, B]
+
+type List[A]   = Mu[ListF[A, ?]]
+----
+
 ==== Cofree
 
-TODO (mention List, Free, Cofree)
+Cofree is a vast subject in itself. It's a "comonad" with many interesting properties, but
+for the sake of this course we are interested in its recursive character. In a simplicit view, `Cofree` is:
+
+- some value of type `A`
+
+plus
+
+- an expression with nested `Cofree`(s)
+
+In other words, `Cofree` can be viewed as a recursive structure similar to `Fix[Expr]` but with additional
+labels (tags) placed on every node of our tree.
+
+One example may be adding a type system to our DSL. This allows putting a "type" tag on each node of an expression
+tree. For example, let's decompose a `Sum(IntVal(3), Sum(IntVal(5), DecVal(5.5)))`:
+
+If we encode a rule that `(Int + Dec)` has type `Dec`, then our expression becomes:
+
+```
+       Sum: Dec
+     /     \
+    /      Sum: Dec
+   /        /     \
+3: Int   5: Int    5.5: Dec
+```
+
+With recursion schemes, we can construct a `Cofree` representing our expression with labels using catamorphism.
+Then we can run further morphisms on a Cofree without referring to `Fix` or any other wrapper, since `Cofree` is
+such a wrapper in itself. See exercises for examples.
+
+==== Recursive / Corecursive
+
+Finally we can say that all mentioned types: `Fix`, `Mu`, `Nu`, `List`, `Cofree` and others share common properties.
+These properties are grouped under the `Recursive[T]` and `Corecursive[T]` typeclasses. These types are generalizations
+which allow us to write even more abstract code and stay independent of particular wrapper type if it's possible.
+That's why we learned to use `.project` and `.embed` - functions from these type classes, instead of `unfix` which was
+specific to `Fix`.
+
+==== Free
+
+Another interesting `Birecursive[T]` (which means both `Recursive` and `Corecursive`) is `Free`. Yes, *that* Free.
+A free monad also can be run through morphisms! After all, free monads are often used to work with DSLs describing
+some programs. Such program description is similar to our `Expr[A]`.
 
 == Histomorphism
 
