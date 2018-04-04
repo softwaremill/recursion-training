@@ -72,16 +72,7 @@ object Ex03_Catamorphism extends App with Ex03_Traverse {
 
   // AlgebraM
   def evalToDoubleOrErr(exp: Expr[Double]): \/[String, Double] = exp match {
-    case IntValue(v)      => v.toDouble.right
-    case DecValue(v)      => v.right
-    case Sum(d1, d2)      => (d1 + d2).right
-    case Multiply(d1, d2) => (d1 * d2).right
-    case Divide(d1, d2) =>
-      if (d2 == 0)
-        (d1 / d2).right
-      else
-        "Division by zero!".left
-    case Square(d) => (d * d).right
+    case _ => ??? // TODO
   }
 
   val correctExpr: Fix[Expr] =

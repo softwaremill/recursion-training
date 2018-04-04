@@ -363,15 +363,7 @@ Here's our new evaluation:
 ----
 def evalToDouble(exp: Expr[Double]): \/[String, Double] = exp match {
   case IntValue(v) => v.toDouble.right
-  case DecValue(v) => v.right
-  case Sum(d1, d2) => (d1 + d2).right
-  case Multiply(d1, d2) => (d1 * d2).right
-  case Divide(d1, d2) =>
-  if (d2 == 0)
-    (d1 / d2).right
-  else
-    "Division by zero!".left
-  case Square(d) => (d * d).right
+  case _ => ??? // etc
 }
 ----
 
