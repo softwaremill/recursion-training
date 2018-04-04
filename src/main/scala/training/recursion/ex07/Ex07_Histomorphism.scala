@@ -20,12 +20,13 @@ case object DecExpr extends ExprType
 
 object Ex07_Histomorphism extends App with Ex07_Traverse {
 
-  def int(i: Int): Fix[Expr] = IntValue[Fix[Expr]](i).embed
-
-  val expr: Fix[Expr] = Sum(Square(Square(int(3)).embed).embed, Square(Square(Square(int(5)).embed).embed).embed).embed
+  val expr: Fix[Expr] =
+    sum(
+      square(square(int(3))),
+      square(square(square(int(5))))
+    )
 
   // ----------------------- histomorphism
-
   val smartPrint: GAlgebra[Cofree[Expr, ?], Expr, String] = {
     case IntValue(v)                     => s"$v"
     case DecValue(v)                     => s"$v"

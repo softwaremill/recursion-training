@@ -21,8 +21,6 @@ case object DecExpr extends ExprType
 
 object Ex06_Cofree extends App with Ex06_Traverse {
 
-  def int(i: Int): Fix[Expr] = IntValue[Fix[Expr]](i).embed
-
   // ---------- labelling expressions with Cofree
 
   val inferType: Algebra[Expr, Cofree[Expr, ExprType]] = {
@@ -36,16 +34,28 @@ object Ex06_Cofree extends App with Ex06_Traverse {
     case IntValue(v) => v.toString
     case DecValue(v) => v.toString
     case Sum(d1, d2) => s"($d1 + $d2)"
-    case Square(d)   => s"($d^2)"
+    case Square(d)   => s"($d²)"
   }
 
-  val expr: Fix[Expr] = Sum(Square(Square(int(3)).embed).embed, Square(Square(Square(int(5)).embed).embed).embed).embed
+  val expr1: Fix[Expr] =
+    sum(
+      square(int(3)),
+      sum(int(5), int(-20))
+    )
 
-  val typedExpr: Cofree[Expr, ExprType] = expr.cata(inferType)
+  val expr2: Fix[Expr] =
+    sum(
+      square(int(3)),
+      sum(int(5), dec(-20.2))
+    )
+
+  val typedExpr1: Cofree[Expr, ExprType] = expr1.cata(inferType)
+  val typedExpr2: Cofree[Expr, ExprType] = expr2.cata(inferType)
 
   val toTypedStr: Algebra[EnvT[ExprType, Expr, ?], String] = {
     case _ => ??? // TODO
   }
 
-  println(typedExpr.cata(toTypedStr))
+  println(typedExpr1.cata(toTypedStr))
+  println(typedExpr2.cata(toTypedStr))
 }

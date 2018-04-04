@@ -2,6 +2,8 @@ package training.recursion.ex07
 
 import scalaz.Scalaz._
 import scalaz._
+import matryoshka.data.Fix
+import matryoshka.implicits._
 
 trait Ex07_Traverse {
   // it's also a Functor[Expr]
@@ -15,4 +17,11 @@ trait Ex07_Traverse {
         case Square(a)   => f(a).map(Square.apply)
       }
   }
+
+  def int(i: Int): Fix[Expr]                     = IntValue[Fix[Expr]](i).embed
+  def dec(d: Double): Fix[Expr]                  = DecValue[Fix[Expr]](d).embed
+  def sum(a: Int, b: Int): Fix[Expr]             = Sum(int(a), int(b)).embed
+  def sum(a: Fix[Expr], b: Fix[Expr]): Fix[Expr] = Sum(a, b).embed
+  def square(e: Fix[Expr]): Fix[Expr]            = Square(e).embed
+
 }
