@@ -4,8 +4,6 @@ import matryoshka._
 import matryoshka.implicits._
 import matryoshka.data._
 
-import scalaz.Functor
-
 // -------------------- the DSL --------------------
 sealed trait Expr[A]
 
@@ -16,14 +14,10 @@ case class Multiply[A](a: A, b: A) extends Expr[A]
 
 object Ex04_Anamorphism extends App with Ex04_Traverse {
 
-  // Int => Expr[Int]
+  // Int => Expr[Int] consisting of only 1s and 2s
   val toBinary: Coalgebra[Expr, Int] = (n: Int) =>
     n match {
-      case 0 => IntValue(0)
-      case 1 => IntValue(1)
-      case 2 => IntValue(2)
-      case _ if n % 2 == 0 => Multiply(2, n / 2)
-      case _ => Sum(1, n - 1)
+      case _ => ??? // TODO
   }
 
   val toText: Algebra[Expr, String] = {
