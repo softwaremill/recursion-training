@@ -1,4 +1,5 @@
 = Recursion schemes
+:icons: font
 
 This repository contains documentation, samples and exercises for the Recursion Schemes workshop.
 
