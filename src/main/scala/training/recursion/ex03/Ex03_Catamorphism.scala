@@ -21,7 +21,7 @@ object Ex03_Catamorphism extends App with Ex03_Traverse {
   import matryoshka.implicits._
 
   // a set of rules
-  val evalToDouble: Algebra[Expr, Double] = {
+  def evalToDouble(expr: Expr[Double]): Double = expr match {
     case IntValue(v)      => v.toDouble
     case DecValue(v)      => v
     case Sum(d1, d2)      => d1 + d2
@@ -37,6 +37,7 @@ object Ex03_Catamorphism extends App with Ex03_Traverse {
     )
   )
 
+  // comment this out and recompile to see an implicit resolution error
   implicit val ExprFunctor: Functor[Expr] = ??? // TODO
 
   println(s"Expression: $sumExpr\nExpr evaluated to double: ${sumExpr.cata(evalToDouble)}")
@@ -47,15 +48,17 @@ object Ex03_Catamorphism extends App with Ex03_Traverse {
 
   val fixedSum: Fix[Expr] =
     Sum(
-      IntValue[Fix[Expr]](10).embed,
+      IntValue[Fix[Expr]](10).embed, // extension method
       IntValue[Fix[Expr]](5).embed
     ).embed
 
   val fixedDivision: Fix[Expr] = ??? // TODO use .embed
 
   // optimization
-  def optimize(expr: Fix[Expr]): Fix[Expr] = ??? // TODO (use .project and .embed)
+  def optimizeSqr(expr: Fix[Expr]): Fix[Expr] = ??? // TODO (use .project and .embed)
 
+  // how to apply this function?
+  // transCataT
   val initialExpr: Fix[Expr] =
     Sum(
       DecValue[Fix[Expr]](5.2).embed,
@@ -65,7 +68,7 @@ object Ex03_Catamorphism extends App with Ex03_Traverse {
       ).embed
     ).embed
 
-  val optimizedExpr = initialExpr.transCataT(optimize)
+  val optimizedExpr = initialExpr.transCataT(optimizeSqr)
   println(optimizedExpr)
 
   // cataM

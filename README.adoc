@@ -356,14 +356,14 @@ We are looking for a function like:
 def mapNode(t: Fix[Expr])(f: Fix[Expr] => Fix[Expr])
 
 def optimize(expr: Fix[Expr]): Fix[Expr] = expr.project match {
-case Multiply(a, b) if (a == b) => Square(a)
-case other => other
+    case Multiply(a, b) if (a == b) => Square(a)
+    case other => other
 }
 
 val optimizedExpr = mapNode(exprTree)(optimize)
 ----
 
-Matroysha offers such a tool, and it's called `transCataT`:
+Matryoshka offers such a tool, and it's called `transCataT`:
 
 [source, scala]
   val optimizedExpr: Fix[Expr] = exprTee.transCataT(optimize)
