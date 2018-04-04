@@ -1,4 +1,4 @@
-package training.recursion.ex08
+package training.recursion.ex09
 
 import matryoshka._
 import matryoshka.data._
@@ -19,17 +19,15 @@ case class Draw(a: Int) extends CalcAction[Unit]
 
 // -------------------------------------------------
 
-object Ex08_Free extends App {
+object Ex09_Free extends App {
 
   val program: Free[CalcAction, Unit] = for {
-    i1 <- Free.point[CalcAction, Int](5)
-    i2 <- Free.point[CalcAction, Int](1)
+    i1  <- Free.point[CalcAction, Int](5)
+    i2  <- Free.point[CalcAction, Int](1)
     sum <- Free.liftF(Sum(i1, i2): CalcAction[Int])
-    sq <- Free.liftF(Square(sum): CalcAction[Int])
-    _ <- Free.liftF(Draw(sq): CalcAction[Unit])
-  }
-    yield ()
-
+    sq  <- Free.liftF(Square(sum): CalcAction[Int])
+    _   <- Free.liftF(Draw(sq): CalcAction[Unit])
+  } yield ()
 
   val interpreter: ~>[CalcAction, Id] = ???
 

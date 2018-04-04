@@ -26,18 +26,18 @@ object Ex05_Paramorphism extends App with Ex05_Traverse {
   // here: Expr[(Fix[Expr], String)] => String
   def algebra(srcAndExpr: (Expr[(Fix[Expr], String)])): String = srcAndExpr match {
     case IntValue(v) => v.toString
-    case Sum((leftSrc, leftStr), (rightSrc, rightStr)) =>
-      leftSrc.project match {
+    case Sum((leftExpr, leftStr), (rightExpr, rightStr)) =>
+      leftExpr.project match {
         case IntValue(a) =>
-          rightSrc.project match {
+          rightExpr.project match {
             case IntValue(b) if a > 0 && b < 0 => s"($a - ${-b})"
             case IntValue(b) if b > 0 && a < 0 => s"($b - ${-a})"
-            case _                             => s"$leftStr + $rightStr"
+            case _                             => s"($leftStr + $rightStr)"
           }
         case _ => s"$leftStr + $rightStr"
       }
-    case Multiply((leftSrc, leftStr), (rightSrc, rightStr)) => ??? // TODO print (a² * a) as a³
-    case Square((_, str))                                   => s"$str²"
+    case Multiply((leftExpr, leftStr), (rightExpr, rightStr)) => ??? // TODO print (a² * a) as a³
+    case Square((_, str))                                     => s"$str²"
   }
 
   val expr: Fix[Expr] =

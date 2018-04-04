@@ -469,7 +469,7 @@ val binAsStr = 31.hylo(toText, toBinary)
 
 Also a fold, very similar to catamorphism. However, it adds one more extra feature -
 with paramorphism, you not only build current state basing on evaluation of previous states,
-buy you also have access to these states. Confusing? Here's an example:
+but you also have access to these states. Confusing? Here's an example:
 Let's say we want to use a special algorithm for a specific case:
 
 We want to print `(3 + -5)` as `(5 - 3)` for better readability.
@@ -574,6 +574,28 @@ val toTypedStr: Algebra[EnvT[ExprType, Expr, ?], String] = {
 
 This reveals one more mystery - there are more fixed point operators than just `Fix` and `Cofree`.
 
+== Histomorphism
+
+Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
+could access pairs of (child_evaluated + child_sourceExpression), in histomorphism we work with
+(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we
+use `Cofree`.
+
+[source, scala]
+----
+val smartPrint: GAlgebra[Cofree[Expr, ?], Expr, String] = {
+    case Square(Cofree(a: String, history: Expr[Cofree[Expr, String]])) =>
+        history match {
+          case Sum(Cofree(a, aHistory), Cofree(b, bHistory)) => ...
+          case _ => ...
+        }
+    case _ => ...
+}
+----
+
+We can `unpack` each node to desired depth, because history elements carry everything that has
+been computed up to this point.
+
 == Fixed point operators
 
 So far we considered `Fix[]` to be a kind of type-level trick to deal with recursive expressions. For most applications
@@ -613,6 +635,8 @@ final case class ConsF[A, B](head: A, tail: B) extends ListF[A, B]
 
 type List[A]   = Mu[ListF[A, ?]]
 ----
+
+// TODO exercise
 
 ==== Cofree
 
@@ -661,28 +685,6 @@ some programs. Such program description is similar to our `Expr[A]`.
 
 If you're familiar with free monads, you probably recognize `foldMap`. It's nothing more but a
 catamorphism!
-
-== Histomorphism
-
-Histomporphism is a fold which also provides something akin to a "pair". While in paramorphism for each node we
-could access pairs of (child_evaluated + child_sourceExpression), in histomorphism we work with
-(child_evaluated + child_tree). This child_tree can be traversed further down. To represent this whole pair, we
-use `Cofree`.
-
-[source, scala]
-----
-val smartPrint: GAlgebra[Cofree[Expr, ?], Expr, String] = {
-    case Square(Cofree(a: String, history: Expr[Cofree[Expr, String]])) =>
-        history match {
-          case Sum(Cofree(a, aHistory), Cofree(b, bHistory)) => ...
-          case _ => ...
-        }
-    case _ => ...
-}
-----
-
-We can `unpack` each node to desired depth, because history elements carry everything that has
-been computed up to this point.
 
 == Sources and resources
 
