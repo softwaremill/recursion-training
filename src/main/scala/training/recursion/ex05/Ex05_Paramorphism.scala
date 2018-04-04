@@ -17,7 +17,11 @@ case class Square[A](a: A)         extends Expr[A]
 
 object Ex05_Paramorphism extends App with Ex05_Traverse {
 
-  def int(i: Int): Fix[Expr] = IntValue[Fix[Expr]](i).embed
+  // handy utility functions if you want to build expressions by hand
+  def int(i: Int): Fix[Expr]                          = IntValue[Fix[Expr]](i).embed
+  def sum(a: Int, b: Int): Fix[Expr]                  = Sum(int(a), int(b)).embed
+  def multiply(a: Fix[Expr], b: Fix[Expr]): Fix[Expr] = Multiply(a, b).embed
+  def square(e: Fix[Expr]): Fix[Expr]                 = Square(e).embed
 
   // here: Expr[(Fix[Expr], String)] => String
   def algebra(srcAndExpr: (Expr[(Fix[Expr], String)])): String = srcAndExpr match {
@@ -37,10 +41,10 @@ object Ex05_Paramorphism extends App with Ex05_Traverse {
   }
 
   val expr: Fix[Expr] =
-    Multiply(
-      Square(Sum(int(-3), int(5)).embed).embed,
-      Sum(int(-3), int(5)).embed,
-    ).embed
+    multiply(
+      square(sum(-3, 5)),
+      sum(-3, 5)
+    )
 
   println(expr.para(algebra))
 }
