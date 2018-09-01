@@ -5,6 +5,8 @@ This repository contains documentation, samples and exercises for the Recursion 
 
 TIP: "these things are easier to use than understand"
 
+Slides from my presentation link:presentation.html[Recursion Schemes by example]
+
 === Running
 Load this project in sbt and just launch `run`, then select the exercise you'd like to execute.
 
