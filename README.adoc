@@ -566,6 +566,7 @@ val inferType: Algebra[Expr, Cofree[Expr, ExprType]] = {
 as `Fix`. Having an expression wrapped with `Cofree`, we can apply morphisms directly to it!
 
 [source, scala]
+----
 val typedExpr: Cofree[Expr, ExprType] = expr.cata(inferType)
 
 // No need for Fix[]
@@ -573,6 +574,7 @@ val toTypedStr: Algebra[EnvT[ExprType, Expr, ?], String] = {
   case EnvT((exprType, Sum(a, b))) => s"($a + $b): $exprType" // (3 + 5.5): DecValue
   case _ => "..."
 }
+----
 
 This reveals one more mystery - there are more fixed point operators than just `Fix` and `Cofree`.
 
